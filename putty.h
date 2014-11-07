@@ -835,6 +835,8 @@ void cleanup_exit(int);
     X(INT, NONE, mouse_override) \
     X(INT, NONE, copy_clipbd_url_reg) /* url-cut */ \
     X(INT, INT, wordness) \
+    /* Gnome CopyPast hack */ \
+    X(INT, NONE, gnomecp) \
     /* translations */ \
     X(INT, NONE, vtmode) \
     X(STR, NONE, line_codepage) \
@@ -1039,6 +1041,7 @@ int term_paste_pending(Terminal *);
 void term_paste(Terminal *);
 void term_nopaste(Terminal *);
 int term_ldisc(Terminal *, int option);
+void term_copy(Terminal *); /* Gnome CopyPast hack */
 void term_copyall(Terminal *);
 void term_reconfig(Terminal *, Conf *);
 void term_seen_key_event(Terminal *); 

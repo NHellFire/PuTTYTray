@@ -106,6 +106,7 @@ typedef struct terminal_tag Terminal;
 
 #define ATTR_NARROW  0x800000U
 #define ATTR_WIDE    0x400000U
+#define ATTR_ITALIC  0x1000000U
 #define ATTR_BOLD    0x040000U
 #define ATTR_UNDER   0x080000U
 #define ATTR_REVERSE 0x100000U

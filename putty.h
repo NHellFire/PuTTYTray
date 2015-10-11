@@ -807,6 +807,7 @@ void cleanup_exit(int);
     X(INT, NONE, width) \
     X(INT, NONE, height) \
     X(FONT, NONE, font) \
+    X(INT, NONE, use_italic) \
     X(INT, NONE, font_quality) \
     X(FILENAME, NONE, logfilename) \
     X(INT, NONE, logtype) \

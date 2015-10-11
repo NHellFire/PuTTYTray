@@ -645,6 +645,7 @@ void save_open_settings(void *sesskey, Conf *conf)
     write_setting_i(sesskey, "TermWidth", conf_get_int(conf, CONF_width));
     write_setting_i(sesskey, "TermHeight", conf_get_int(conf, CONF_height));
     write_setting_fontspec(sesskey, "Font", conf_get_fontspec(conf, CONF_font));
+    write_setting_i(sesskey, "UseItalic", conf_get_int(conf, CONF_use_italic));
     write_setting_i(sesskey, "FontQuality", conf_get_int(conf, CONF_font_quality));
     write_setting_i(sesskey, "FontVTMode", conf_get_int(conf, CONF_vtmode));
     write_setting_i(sesskey, "UseSystemColours", conf_get_int(conf, CONF_system_colour));
@@ -996,6 +997,7 @@ void load_open_settings(void *sesskey, Conf *conf)
     gppi(sesskey, "TermWidth", 80, conf, CONF_width);
     gppi(sesskey, "TermHeight", 24, conf, CONF_height);
     gppfont(sesskey, "Font", conf, CONF_font);
+    gppi(sesskey, "UseItalic", 1, conf, CONF_use_italic);
     gppi(sesskey, "FontQuality", FQ_DEFAULT, conf, CONF_font_quality);
     gppi(sesskey, "FontVTMode", VT_UNICODE, conf, CONF_vtmode);
     gppi(sesskey, "UseSystemColours", 0, conf, CONF_system_colour);

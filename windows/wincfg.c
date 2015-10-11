@@ -283,6 +283,9 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		    "Font settings");
     ctrl_checkbox(s, "Allow selection of variable-pitch fonts", NO_SHORTCUT,
                   HELPCTX(appearance_font), variable_pitch_handler, I(0));
+    ctrl_checkbox(s, "Allow terminal to display italic fonts", NULL,
+                  HELPCTX(appearance_font),
+                  conf_checkbox_handler, I(CONF_use_italic));
     ctrl_radiobuttons(s, "Font quality:", 'q', 2,
 		      HELPCTX(appearance_font),
 		      conf_radiobutton_handler,

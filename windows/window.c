@@ -186,6 +186,7 @@ Conf *conf;			       /* exported to windlg.c */
 static void conf_cache_data(void);
 int cursor_type;
 int vtmode;
+int use_italic;
 
 static unsigned int update_url_id;
 static unsigned int search_url_id;
@@ -1826,6 +1827,10 @@ static void init_fonts(int pick_width, int pick_height)
         f(FONT_BOLD, font->charset, fw_bold, FALSE, FALSE);
     }
 
+    if (use_italic) {
+        f(FONT_ITALIC, font->charset, fw_dontcare, FALSE, TRUE);
+    }
+
     SelectObject(hdc, fonts[FONT_NORMAL]);
     GetTextMetrics(hdc, &tm);
 
@@ -1917,7 +1922,6 @@ static void init_fonts(int pick_width, int pick_height)
 	}
     }
 
-    f(FONT_ITALIC, font->charset, fw_dontcare, FALSE, TRUE);
 
 #undef f
 
@@ -2420,6 +2424,7 @@ static void conf_cache_data(void)
     /* Cache some items from conf to speed lookups in very hot code */
     cursor_type = conf_get_int(conf, CONF_cursor_type);
     vtmode = conf_get_int(conf, CONF_vtmode);
+    use_italic = conf_get_int(conf, CONF_use_italic);
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
@@ -2800,6 +2805,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 			font->isbold != prev_font->isbold ||
 			font->height != prev_font->height ||
 			font->charset != prev_font->charset ||
+                        conf_get_int(conf, CONF_use_italic) !=
+                        conf_get_int(prev_conf, CONF_use_italic) ||
 			conf_get_int(conf, CONF_font_quality) !=
 			conf_get_int(prev_conf, CONF_font_quality) ||
 			conf_get_int(conf, CONF_vtmode) !=
@@ -4087,7 +4094,7 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 	nfont |= FONT_BOLD;
     if (und_mode == UND_FONT && (attr & ATTR_UNDER))
 	nfont |= FONT_UNDERLINE;
-    if (attr & ATTR_ITALIC)
+    if (use_italic && (attr & ATTR_ITALIC))
         nfont |= FONT_ITALIC;
     another_font(nfont);
     if (!fonts[nfont]) {

@@ -151,7 +151,7 @@ static Backend *back;
 static void *backhandle = NULL;
 
 static struct unicode_data ucsdata;
-static int session_closed;
+static int must_close_session, session_closed;
 static int reconfiguring = FALSE;
 
 static const struct telnet_special *specials = NULL;
@@ -394,6 +394,9 @@ static void close_session(void *ignored_context)
     char morestuff[100];
     int i;
 
+	if (!must_close_session) 
+		return;
+
     session_closed = TRUE;
     sprintf(morestuff, "%.70s (inactive)", appname);
     set_icon(NULL, morestuff);
@@ -420,6 +423,15 @@ static void close_session(void *ignored_context)
 	InsertMenu(popup_menus[i].menu, IDM_DUPSESS, MF_BYCOMMAND | MF_ENABLED,
 		   IDM_RESTART, "&Restart Session");
     }
+
+	/*
+	* Unset the 'must_close_session' flag, or else we'll come
+	* straight back here the next time we go round the main message
+	* loop - which, worse still, will be immediately (without
+	* blocking) because we've just triggered a WM_SETTEXT by the
+	* window title change above.
+	*/
+	must_close_session = FALSE;
 }
 
 /* Copy at most n characters from src to dst or until copying a '\0'
@@ -1472,6 +1484,7 @@ void connection_fatal(void *frontend, char *fmt, ...)
         if (conf_get_int(conf, CONF_close_on_exit) == FORCE_ON)
             PostQuitMessage(1);
         else {
+			must_close_session = TRUE;
             queue_toplevel_callback(close_session, NULL);
         }
      }
@@ -2366,7 +2379,8 @@ void notify_remote_exit(void *fe)
 	    (close_on_exit == AUTO && exitcode != INT_MAX)) {
 	    PostQuitMessage(0);
 	} else {
-            queue_toplevel_callback(close_session, NULL);
+        queue_toplevel_callback(close_session, NULL);
+		must_close_session = TRUE;
 	    session_closed = TRUE;
 	    /* exitcode == INT_MAX indicates that the connection was closed
 	     * by a fatal error, so an error box will be coming our way and

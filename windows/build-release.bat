@@ -16,7 +16,7 @@ echo #define TEXTVER "PuTTYTray %1" > ../version.h
 echo #define SSHVER "PuTTYTray-%1" >> ../version.h
 echo #define BINARY_VERSION %upstreammajor%,%upstreamminor%,0,%trayversion% >> ../version.h
 
-nmake /F Makefile.vc putty.exe plink.exe
+nmake /F Makefile.vc putty.exe plink.exe || goto :error
 
 signtool sign /a ^
   /fd SHA256 ^
@@ -24,4 +24,9 @@ signtool sign /a ^
   /td SHA256 ^
   putty.exe ^
   plink.exe
+goto :end
+
+:error
+  exit /B %ERRORLEVEL%
+
 :end

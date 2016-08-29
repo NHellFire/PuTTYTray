@@ -681,6 +681,8 @@ void save_open_settings(void *sesskey, Conf *conf)
 	}
 	write_setting_s(sesskey, buf, buf2);
     }
+	/* Gnome CopyPast hack */
+    write_setting_i(sesskey, "GnomeCP", conf_get_int(conf, CONF_gnomecp));
     write_setting_s(sesskey, "LineCodePage", conf_get_str(conf, CONF_line_codepage));
     write_setting_i(sesskey, "CJKAmbigWide", conf_get_int(conf, CONF_cjk_ambig_wide));
     write_setting_i(sesskey, "UTF8Override", conf_get_int(conf, CONF_utf8_override));
@@ -1051,6 +1053,8 @@ void load_open_settings(void *sesskey, Conf *conf)
 	}
 	sfree(buf2);
     }
+    /* Gnome CopyPast hack */
+    gppi(sesskey, "GnomeCP", 0, conf, CONF_gnomecp);
     /*
      * The empty default for LineCodePage will be converted later
      * into a plausible default for the locale.

@@ -4810,6 +4810,16 @@ static int TranslateKey(UINT message, WPARAM wParam, LPARAM lParam,
 	    request_paste(NULL);
 	    return 0;
 	}
+	/* Gnome CopyPast hack */
+	if (conf_get_int(conf, CONF_gnomecp) && wParam == 'C' && shift_state == 3) {	/* Ctrl-Shift-C */
+	    term_copy(term);
+	    return 0;
+	}
+	if (conf_get_int(conf, CONF_gnomecp) && wParam == 'V' && shift_state == 3) {	/* Ctrl-Shift-V */
+	    request_paste(NULL);
+	    return 0;
+	}
+	/* Gnome CopyPast hack */
 	if (left_alt && wParam == VK_F4 && conf_get_int(conf, CONF_alt_f4)) {
 	    return -1;
 	}

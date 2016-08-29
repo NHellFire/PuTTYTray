@@ -106,7 +106,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 			  int midsession, int protocol)
 {
     struct controlset *s;
-    union control *c;
+    union control *c, *c2;
     char *str;
     int col = 0;
     int cancelColumn;
@@ -377,14 +377,23 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		      "Windows (Middle extends, Right brings up menu)", I(2),
 		      "Compromise (Middle extends, Right pastes)", I(0),
 		      "xterm (Middle pastes, Right extends)", I(1), NULL);
-    /*
+
+    /* Gnome CopyPast hack */
+    ctrl_checkbox(s, "Use Gnome-style copy/paste (Ctrl+Shift+C|V)", 'u',
+		HELPCTX(no_help),
+		conf_checkbox_handler, I(CONF_gnomecp));
+	/*
      * This really ought to go at the _top_ of its box, not the
      * bottom, so we'll just do some shuffling now we've set it
      * up...
      */
-    c = s->ctrls[s->ncontrols-1];      /* this should be the new control */
-    memmove(s->ctrls+1, s->ctrls, (s->ncontrols-1)*sizeof(union control *));
+    c = s->ctrls[s->ncontrols-2];      /* this should be the new control */
+	c2 = s->ctrls[s->ncontrols-1];      /* this should be the new control */
+    memmove(s->ctrls+2, s->ctrls, (s->ncontrols-2)*sizeof(union control *));
     s->ctrls[0] = c;
+	s->ctrls[1] = c2;
+    
+
 
     ctrl_checkbox(s, "Paste to clipboard in RTF as well as plain text", 'f',
 		HELPCTX(selection_rtf),
@@ -496,13 +505,18 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 		  HELPCTX(no_help),
 		  conf_checkbox_handler, I(CONF_url_ctrl_click));
 
+	/* url-cut -- windows only parameter for now */
+    ctrl_checkbox(s, "Detect URLs on selection and launch in browser", 'u',
+                  HELPCTX(selection_shiftdrag),
+                  conf_checkbox_handler, I(CONF_copy_clipbd_url_reg));
+
 	s = ctrl_getset(b, "Window/Hyperlinks", "browser", "Browser application");
 
 	ctrl_checkbox(s, "Use the default browser", 'b',
 		  HELPCTX(no_help),
 		  conf_checkbox_handler, I(CONF_url_defbrowser));
 
-	ctrl_filesel(s, "or specify an application to open hyperlinks with:", 's',
+	ctrl_filesel(s, "or specify an application to open hyperlinks with:", 'p',
 		"Application (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0", TRUE,
 		"Select executable to open hyperlinks with", HELPCTX(no_help),
 		 conf_filesel_handler, I(CONF_url_browser));

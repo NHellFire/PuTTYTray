@@ -5732,6 +5732,16 @@ void clipme(Terminal *term, pos top, pos bottom, int rect, int desel,
     sfree(buf.attrbuf);
 }
 
+/* Gnome CopyPast hack */
+void term_copy(Terminal *term)
+{
+    if (term->selstate == SELECTED)
+    {
+        clipme(term, term->selstart, term->selend, 
+            (term->seltype == RECTANGULAR), FALSE, write_clip);
+    }
+}
+
 void term_copyall(Terminal *term)
 {
     pos top;
@@ -6339,8 +6349,9 @@ void term_mouse(Terminal *term, Mouse_Button braw, Mouse_Button bcooked,
 	     * We've completed a selection. We now transfer the
 	     * data to the clipboard.
 	     */
-	    clipme(term, term->selstart, term->selend,
-		   (term->seltype == RECTANGULAR), FALSE, write_clip);
+	    if (conf_get_int(term->conf, CONF_gnomecp) != 1) /* Gnome CopyPast hack */
+		    clipme(term, term->selstart, term->selend,
+			(term->seltype == RECTANGULAR), FALSE, write_clip);
 	    term->selstate = SELECTED;
 	} else
 	    term->selstate = NO_SELECTION;

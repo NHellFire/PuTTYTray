@@ -9,7 +9,7 @@ if %trayversion%.==. echo Usage: %0 p0.61-t004 & goto end
 set INCLUDE=%PROGRAMFILES(x86)%\Microsoft SDKs\Windows\v7.1A\Include;%INCLUDE%
 set LIB=%PROGRAMFILES(x86)%\Microsoft SDKs\Windows\v7.1A\lib;%LIB%
 
-; remove leading zeros, fixing octal confusion
+REM remove leading zeros, fixing octal confusion
 set /a trayversion=10000%trayversion% %% 10000
 
 echo #define TEXTVER "PuTTYTray %1" > ../version.h

@@ -18,6 +18,8 @@ echo #define BINARY_VERSION %upstreammajor%,%upstreamminor%,0,%trayversion% >> .
 
 nmake /F Makefile.vc putty.exe plink.exe || goto :error
 
+IF "%NOSIGN%" == "1" goto :end
+
 signtool sign /a ^
   /fd SHA256 ^
   /tr http://tsa.startssl.com/rfc3161 ^

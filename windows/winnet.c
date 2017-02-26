@@ -194,8 +194,6 @@ DECL_WINDOWS_FUNCTION(static, int, WSAIoctl,
 		      (SOCKET, DWORD, LPVOID, DWORD, LPVOID, DWORD,
 		       LPDWORD, LPWSAOVERLAPPED,
 		       LPWSAOVERLAPPED_COMPLETION_ROUTINE));
-DECL_WINDOWS_FUNCTION(static, int, getsockname,
-		      (SOCKET, const struct sockaddr FAR *, int FAR *));
 #ifndef NO_IPV6
 DECL_WINDOWS_FUNCTION(static, int, getaddrinfo,
 		      (const char *nodename, const char *servname,
@@ -325,7 +323,6 @@ void sk_init(void)
     GET_WINDOWS_FUNCTION(winsock_module, getpeername);
     GET_WINDOWS_FUNCTION(winsock_module, recv);
     GET_WINDOWS_FUNCTION(winsock_module, WSAIoctl);
-    GET_WINDOWS_FUNCTION(winsock_module, getsockname);
 
     /* Try to get the best WinSock version we can get */
     if (!sk_startup(2,2) &&
@@ -991,9 +988,6 @@ static DWORD try_connect(Actual_Socket sock)
     char *errstr;
     short localport;
     int family;
-#if defined(IPTOS) && defined(WINSOCK_TWO)
-	int tos;
-#endif
 
     if (sock->s != INVALID_SOCKET) {
 	do_select(sock->s, 0);
@@ -1032,12 +1026,6 @@ static DWORD try_connect(Actual_Socket sock)
 	BOOL b = TRUE;
 	p_setsockopt(s, SOL_SOCKET, SO_OOBINLINE, (void *) &b, sizeof(b));
     }
-
-#if defined(IPTOS) && defined(WINSOCK_TWO)
-	// FireEgl - Set IP_TOS to whatever IPTOS is defined to:
-	tos = IPTOS;	/* see <netinet/ip.h> */
-	p_setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(tos));
-#endif
 
     if (sock->nodelay) {
 	BOOL b = TRUE;
@@ -1440,24 +1428,6 @@ Socket sk_newlistener(const char *srcaddr, int port, Plug plug,
 #endif
 
     return (Socket) ret;
-}
-
-int sk_getport(Socket sock)
-{
-    /* I won't even try to get IPv6 working here since it is apparently borken
-     * in this release of PuTTY */
-    SOCKADDR_IN a;
-    socklen_t salen;
-    int retcode;
-    Actual_Socket s = (Actual_Socket)sock;
-
-    salen = sizeof(a);
-    retcode = p_getsockname(s->s, (struct sockaddr *) &a, &salen);
-
-    if (retcode != 0)
-	return -1;
-
-    return p_ntohs(a.sin_port);
 }
 
 static void sk_tcp_close(Socket sock)

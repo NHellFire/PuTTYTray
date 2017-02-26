@@ -236,9 +236,9 @@ SockAddr sk_namelookup(const char *host, char **canonicalname, int address_famil
     ret->superfamily = IP;
     *realhost = '\0';
     if (ret->ais->ai_canonname != NULL)
-	strncpy(realhost, ret->ais->ai_canonname, sizeof(realhost) - 1);
+	strncat(realhost, ret->ais->ai_canonname, sizeof(realhost) - 1);
     else
-	strncpy(realhost, host, sizeof(realhost) - 1);
+	strncat(realhost, host, sizeof(realhost) - 1);
 #else
     if ((a = inet_addr(host)) == (unsigned long)(in_addr_t)(-1)) {
 	/*
@@ -455,15 +455,13 @@ void sk_addrcopy(SockAddr addr, char *buf)
     family = SOCKADDR_FAMILY(addr, step);
 
 #ifndef NO_IPV6
-    if (family == AF_INET) {
-        assert(step.ai);
+    if (family == AF_INET)
 	memcpy(buf, &((struct sockaddr_in *)step.ai->ai_addr)->sin_addr,
 	       sizeof(struct in_addr));
-    } else if (family == AF_INET6) {
-        assert(step.ai);
+    else if (family == AF_INET6)
 	memcpy(buf, &((struct sockaddr_in6 *)step.ai->ai_addr)->sin6_addr,
 	       sizeof(struct in6_addr));
-    } else
+    else
 	assert(FALSE);
 #else
     struct in_addr a;
@@ -703,14 +701,12 @@ static int try_connect(Actual_Socket sock)
 #ifndef NO_IPV6
       case AF_INET:
 	/* XXX would be better to have got getaddrinfo() to fill in the port. */
-        assert(sock->step.ai);
 	((struct sockaddr_in *)sock->step.ai->ai_addr)->sin_port =
 	    htons(sock->port);
 	sa = (const union sockaddr_union *)sock->step.ai->ai_addr;
 	salen = sock->step.ai->ai_addrlen;
 	break;
       case AF_INET6:
-        assert(sock->step.ai);
 	((struct sockaddr_in *)sock->step.ai->ai_addr)->sin_port =
 	    htons(sock->port);
 	sa = (const union sockaddr_union *)sock->step.ai->ai_addr;
@@ -1311,6 +1307,7 @@ static int net_select_result(int fd, int event)
                 }
 		return plug_receive(s->plug, 2, buf, ret);
 	    }
+	    break;
 	}
 
 	/*

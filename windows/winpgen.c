@@ -353,8 +353,11 @@ struct MainDlgState {
     char **commentptr;		       /* points to key.comment or ssh2key.comment */
     struct ssh2_userkey ssh2key;
     unsigned *entropy;
-    struct RSAKey key;
-    struct dss_key dsskey;
+    union {
+        struct RSAKey key;
+        struct dss_key dsskey;
+        struct ec_key eckey;
+    };
     HMENU filemenu, keymenu, cvtmenu;
 };
 
@@ -383,70 +386,6 @@ static void setupbigedit2(HWND hwnd, int id, int idstatic,
 		   "OpenSSH authorized_keys file:");
     sfree(buffer);
 }
-
-static int save_ssh1_pubkey(char *filename, struct RSAKey *key)
-{
-    char *dec1, *dec2;
-    FILE *fp;
-
-    fp = fopen(filename, "wb");
-    if (!fp)
-	return 0;
-    dec1 = bignum_decimal(key->exponent);
-    dec2 = bignum_decimal(key->modulus);
-    fprintf(fp, "%d %s %s %s\n",
-	    bignum_bitcount(key->modulus), dec1, dec2, key->comment);
-    fclose(fp);
-    sfree(dec1);
-    sfree(dec2);
-    return 1;
-}
-
-static int save_ssh2_pubkey(char *filename, struct ssh2_userkey *key)
-{
-    unsigned char *pub_blob;
-    char *p;
-    int pub_len;
-    int i, column;
-    FILE *fp;
-
-    pub_blob = key->alg->public_blob(key->data, &pub_len);
-
-    fp = fopen(filename, "wb");
-    if (!fp)
-	return 0;
-
-    fprintf(fp, "---- BEGIN SSH2 PUBLIC KEY ----\n");
-
-    fprintf(fp, "Comment: \"");
-    for (p = key->comment; *p; p++) {
-	if (*p == '\\' || *p == '\"')
-	    fputc('\\', fp);
-	fputc(*p, fp);
-    }
-    fprintf(fp, "\"\n");
-
-    i = 0;
-    column = 0;
-    while (i < pub_len) {
-	char buf[5];
-	int n = (pub_len - i < 3 ? pub_len - i : 3);
-	base64_encode_atom(pub_blob + i, n, buf);
-	i += n;
-	buf[4] = '\0';
-	fputs(buf, fp);
-	if (++column >= 16) {
-	    fputc('\n', fp);
-	    column = 0;
-	}
-    }
-    if (column > 0)
-	fputc('\n', fp);
-    
-    fprintf(fp, "---- END SSH2 PUBLIC KEY ----\n");
-    fclose(fp);
-    sfree(pub_blob);
-    return 1;
 
 /*
  * Warn about the obsolescent key file format.
@@ -1469,7 +1408,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg,
 	{
 	    struct tm tm;
 	    tm = ltime();
-	    if (state->is_dsa)
+            if (state->keytype == DSA)
 		strftime(*state->commentptr, 30, "dsa-key-%Y%m%d", &tm);
             else if (state->keytype == ECDSA)
                 strftime(*state->commentptr, 30, "ecdsa-key-%Y%m%d", &tm);

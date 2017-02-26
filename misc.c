@@ -287,8 +287,7 @@ char *dupstr(const char *s)
 {
     char *p = NULL;
     if (s) {
-        size_t len = strlen(s);
-        assert(len < SIZE_MAX);
+        int len = strlen(s);
         p = snewn(len + 1, char);
         strcpy(p, s);
     }
@@ -507,19 +506,17 @@ void strbuf_catf(strbuf *buf, const char *fmt, ...)
 char *fgetline(FILE *fp)
 {
     char *ret = snewn(512, char);
-    size_t size = 512, len = 0;
+    int size = 512, len = 0;
     while (fgets(ret + len, size - len, fp)) {
 	len += strlen(ret + len);
 	if (len > 0 && ret[len-1] == '\n')
 	    break;		       /* got a newline, we're done */
 	size = len + 512;
-        assert(size < INT_MAX);
 	ret = sresize(ret, size, char);
-        assert(ret);
     }
-    if (len == 0) { /* first fgets returned NULL */
-        sfree(ret);
-        return NULL;
+    if (len == 0) {		       /* first fgets returned NULL */
+	sfree(ret);
+	return NULL;
     }
     ret[len] = '\0';
     return ret;
@@ -813,7 +810,6 @@ void *safemalloc(size_t n, size_t size)
     if (fp)
 	fprintf(fp, "malloc(%d) returns %p\n", size, p);
 #endif
-    assert(p);
     return p;
 }
 
@@ -825,8 +821,6 @@ void *saferealloc(void *ptr, size_t n, size_t size)
 	p = NULL;
     } else {
 	size *= n;
-        if (!size)
-            size = 1;
 	if (!ptr) {
 #ifdef MINEFIELD
 	    p = minefield_c_malloc(size);
@@ -858,7 +852,6 @@ void *saferealloc(void *ptr, size_t n, size_t size)
     if (fp)
 	fprintf(fp, "realloc(%p,%d) returns %p\n", ptr, size, p);
 #endif
-    assert(p);
     return p;
 }
 

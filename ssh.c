@@ -34,6 +34,7 @@ typedef enum {
     SSH2_PKTCTX_NOKEX,
     SSH2_PKTCTX_DHGROUP,
     SSH2_PKTCTX_DHGEX,
+    SSH2_PKTCTX_ECDHKEX,
     SSH2_PKTCTX_RSAKEX
 } Pkt_KCtx;
 typedef enum {
@@ -174,15 +175,15 @@ static unsigned int ssh_tty_parse_specchar(char *s)
 }
 static unsigned int ssh_tty_parse_boolean(char *s)
 {
-    if (_stricmp(s, "yes") == 0 ||
-	_stricmp(s, "on") == 0 ||
-	_stricmp(s, "true") == 0 ||
-	_stricmp(s, "+") == 0)
+    if (stricmp(s, "yes") == 0 ||
+	stricmp(s, "on") == 0 ||
+	stricmp(s, "true") == 0 ||
+	stricmp(s, "+") == 0)
 	return 1; /* true */
-    else if (_stricmp(s, "no") == 0 ||
-	     _stricmp(s, "off") == 0 ||
-	     _stricmp(s, "false") == 0 ||
-	     _stricmp(s, "-") == 0)
+    else if (stricmp(s, "no") == 0 ||
+	     stricmp(s, "off") == 0 ||
+	     stricmp(s, "false") == 0 ||
+	     stricmp(s, "-") == 0)
 	return 0; /* false */
     else
 	return (atoi(s) != 0);
@@ -263,6 +264,8 @@ static const char *ssh2_pkt_type(Pkt_KCtx pkt_kctx, Pkt_ACtx pkt_actx,
     translatek(SSH2_MSG_KEXRSA_PUBKEY, SSH2_PKTCTX_RSAKEX);
     translatek(SSH2_MSG_KEXRSA_SECRET, SSH2_PKTCTX_RSAKEX);
     translatek(SSH2_MSG_KEXRSA_DONE, SSH2_PKTCTX_RSAKEX);
+    translatek(SSH2_MSG_KEX_ECDH_INIT, SSH2_PKTCTX_ECDHKEX);
+    translatek(SSH2_MSG_KEX_ECDH_REPLY, SSH2_PKTCTX_ECDHKEX);
     translate(SSH2_MSG_USERAUTH_REQUEST);
     translate(SSH2_MSG_USERAUTH_FAILURE);
     translate(SSH2_MSG_USERAUTH_SUCCESS);
@@ -6070,7 +6073,7 @@ static void do_ssh1_connection(Ssh ssh, const unsigned char *in, int inlen,
 	ssh_special(ssh, TS_EOF);
 
     if (ssh->ldisc)
-	ldisc_send(ssh->ldisc, NULL, 0, 0);/* cause ldisc to notice changes */
+	ldisc_echoedit_update(ssh->ldisc);  /* cause ldisc to notice changes */
     ssh->send_ok = 1;
     ssh->channels = newtree234(ssh_channelcmp);
     while (1) {
@@ -6176,40 +6179,10 @@ static void ssh1_protocol(Ssh ssh, const void *vin, int inlen,
 }
 
 /*
- * Utility routine for decoding comma-separated strings in KEXINIT.
+ * Utility routines for decoding comma-separated strings in KEXINIT.
  */
-static int in_commasep_string(char *needle, char *haystack, int haylen)
-{
-    int needlen;
-    if (!needle || !haystack)	       /* protect against null pointers */
-	return 0;
-    needlen = strlen(needle);
-    while (1) {
-	/*
-	 * Is it at the start of the string?
-	 */
-	if (haylen >= needlen &&       /* haystack is long enough */
-	    !memcmp(needle, haystack, needlen) &&	/* initial match */
-	    (haylen == needlen || haystack[needlen] == ',')
-	    /* either , or EOS follows */
-	    )
-	    return 1;
-	/*
-	 * If not, search for the next comma and resume after that.
-	 * If no comma found, terminate.
-	 */
-	while (haylen > 0 && *haystack != ',')
-	    haylen--, haystack++;
-	if (haylen == 0)
-	    return 0;
-	haylen--, haystack++;	       /* skip over comma itself */
-    }
-}
-
-/*
- * Similar routine for checking whether we have the first string in a list.
- */
-static int first_in_commasep_string(char *needle, char *haystack, int haylen)
+static int first_in_commasep_string(char const *needle, char const *haystack,
+				    int haylen)
 {
     int needlen;
     if (!needle || !haystack)	       /* protect against null pointers */
@@ -6256,6 +6229,7 @@ static void ssh2_pkt_addstring_commasep(struct Packet *pkt, const char *data)
 	ssh_pkt_addstring_str(pkt, ",");
     ssh_pkt_addstring_str(pkt, data);
 }
+
 
 /*
  * SSH-2 key derivation (RFC 4253 section 7.2).
@@ -6399,6 +6373,7 @@ static void do_ssh2_transport(Ssh ssh, const void *vin, int inlen,
 	int hostkeylen, siglen, rsakeylen;
 	void *hkey;		       /* actual host key */
 	void *rsakey;		       /* for RSA kex */
+        void *eckey;                   /* for ECDH kex */
 	unsigned char exchange_hash[SSH2_KEX_MAX_HASH_LEN];
 	int n_preferred_kex;
 	const struct ssh_kexes *preferred_kex[KEX_MAX];
@@ -6467,6 +6442,10 @@ static void do_ssh2_transport(Ssh ssh, const void *vin, int inlen,
 		s->preferred_kex[s->n_preferred_kex++] =
 		    &ssh_rsa_kex;
 		break;
+              case KEX_ECDH:
+                s->preferred_kex[s->n_preferred_kex++] =
+                    &ssh_ecdh_kex;
+                break;
 	      case KEX_WARN:
 		/* Flag for later. Don't bother if it's the last in
 		 * the list. */
@@ -8826,7 +8805,6 @@ static void ssh2_msg_channel_open(Ssh ssh, struct Packet *pktin)
     struct Packet *pktout;
 
     ssh_pkt_getstring(pktin, &type, &typelen);
-    assert(type);
     c = snew(struct ssh_channel);
     c->ssh = ssh;
 
@@ -10924,7 +10902,7 @@ static void do_ssh2_authconn(Ssh ssh, const unsigned char *in, int inlen,
      * Transfer data!
      */
     if (ssh->ldisc)
-	ldisc_send(ssh->ldisc, NULL, 0, 0);/* cause ldisc to notice changes */
+	ldisc_echoedit_update(ssh->ldisc);  /* cause ldisc to notice changes */
     if (ssh->mainchan)
 	ssh->send_ok = 1;
     while (1) {
@@ -11301,7 +11279,6 @@ static const char *ssh_init(void *frontend_handle, void **backend_handle,
     ssh->protocol_initial_phase_done = FALSE;
 
     ssh->pinger = NULL;
-    ssh->fullhostname = NULL;
 
     ssh->incoming_data_size = ssh->outgoing_data_size =
 	ssh->deferred_data_size = 0L;
@@ -11460,7 +11437,7 @@ static void ssh_reconfig(void *handle, Conf *conf)
 	unsigned long new_next = ssh->last_rekey + rekey_time*60*TICKSPERSEC;
 	unsigned long now = GETTICKCOUNT();
 
-	if (now - ssh->last_rekey > rekey_time*60ul*TICKSPERSEC) {
+	if (now - ssh->last_rekey > rekey_time*60*TICKSPERSEC) {
 	    rekeying = "timeout shortened";
 	} else {
 	    ssh->next_rekey = schedule_timer(new_next - now, ssh2_timer, ssh);

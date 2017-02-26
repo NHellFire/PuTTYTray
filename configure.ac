@@ -17,9 +17,6 @@ AC_PROG_RANLIB
 ifdef([AM_PROG_AR],[AM_PROG_AR])
 AM_PROG_CC_C_O
 
-AM_PROG_CC_C_O
-AM_PROG_AR
-
 # Mild abuse of the '--enable' option format to allow manual
 # specification of setuid or setgid setup in pterm.
 setidtype=none

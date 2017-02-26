@@ -488,6 +488,7 @@ static void kexlist_handler(union control *ctrl, void *dlg,
 	    { "Diffie-Hellman group 14",	KEX_DHGROUP14 },
 	    { "Diffie-Hellman group exchange",	KEX_DHGEX },
 	    { "RSA-based key exchange", 	KEX_RSA },
+            { "ECDH key exchange",              KEX_ECDH },
 	    { "-- warn below here --",		KEX_WARN }
 	};
 
@@ -765,9 +766,8 @@ static void sessionsaver_handler(union control *ctrl, void *dlg,
                     sfree(errmsg);
                 }
             }
-            get_sesslist(&ssd->sesslist, FALSE);
-            get_sesslist(&ssd->sesslist, TRUE);
-
+	    get_sesslist(&ssd->sesslist, FALSE);
+	    get_sesslist(&ssd->sesslist, TRUE);
 	    dlg_refresh(ssd->editbox, dlg);
 	    dlg_refresh(ssd->listbox, dlg);
 	} else if (!ssd->midsession &&

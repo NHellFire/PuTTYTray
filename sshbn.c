@@ -1472,6 +1472,39 @@ Bignum bignum_from_decimal(const char *decimal)
     return result;
 }
 
+Bignum bignum_random_in_range(const Bignum lower, const Bignum upper)
+{
+    Bignum ret = NULL;
+    unsigned char *bytes;
+    int upper_len = bignum_bitcount(upper);
+    int upper_bytes = upper_len / 8;
+    int upper_bits = upper_len % 8;
+    if (upper_bits) ++upper_bytes;
+
+    bytes = snewn(upper_bytes, unsigned char);
+    do {
+        int i;
+
+        if (ret) freebn(ret);
+
+        for (i = 0; i < upper_bytes; ++i)
+        {
+            bytes[i] = (unsigned char)random_byte();
+        }
+        /* Mask the top to reduce failure rate to 50/50 */
+        if (upper_bits)
+        {
+            bytes[i - 1] &= 0xFF >> (8 - upper_bits);
+        }
+
+        ret = bignum_from_bytes(bytes, upper_bytes);
+    } while (bignum_cmp(ret, lower) < 0 || bignum_cmp(ret, upper) > 0);
+    smemclr(bytes, upper_bytes);
+    sfree(bytes);
+
+    return ret;
+}
+
 /*
  * Read an SSH-1-format bignum from a data buffer. Return the number
  * of bytes consumed, or -1 if there wasn't enough data.

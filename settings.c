@@ -1275,6 +1275,7 @@ void get_sesslist(struct sesslist *list, int allocate)
     void *handle;
 
     if (allocate) {
+
 	buflen = bufsize = 0;
 	list->buffer = NULL;
 	if ((handle = enum_settings_start()) != NULL) {

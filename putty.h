@@ -284,6 +284,7 @@ enum {
     KEX_DHGROUP14,
     KEX_DHGEX,
     KEX_RSA,
+    KEX_ECDH,
     KEX_MAX
 };
 
@@ -651,7 +652,7 @@ void begin_session(void *frontend);
 void sys_cursor(void *frontend, int x, int y);
 void request_paste(void *frontend);
 void frontend_keypress(void *frontend);
-void ldisc_update(void *frontend, int echo, int edit);
+void frontend_echoedit_update(void *frontend, int echo, int edit);
 /* It's the backend's responsibility to invoke this at the start of a
  * connection, if necessary; it can also invoke it later if the set of
  * special commands changes. It does not need to invoke it at session
@@ -1023,8 +1024,6 @@ void noise_regular(void);
 void noise_ultralight(unsigned long data);
 void random_save_seed(void);
 void random_destroy_seed(void);
-
-enum storage_t;
 
 /*
  * Exports from settings.c.
@@ -1598,18 +1597,10 @@ void request_callback_notifications(toplevel_callback_notify_fn_t notify,
 #endif
 
 /* SURROGATE PAIR */
-#ifndef HIGH_SURROGATE_START
 #define HIGH_SURROGATE_START 0xd800
-#endif
-#ifndef HIGH_SURROGATE_END
 #define HIGH_SURROGATE_END 0xdbff
-#endif
-#ifndef LOW_SURROGATE_START
 #define LOW_SURROGATE_START 0xdc00
-#endif
-#ifndef LOW_SURROGATE_END
 #define LOW_SURROGATE_END 0xdfff
-#endif
 
 /* These macros exist in the Windows API, so the environment may
  * provide them. If not, define them in terms of the above. */

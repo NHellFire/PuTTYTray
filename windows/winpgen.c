@@ -1381,7 +1381,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg,
 			   MAKELPARAM(0, PROGRESSRANGE));
 	SendDlgItemMessage(hwnd, IDC_PROGRESS, PBM_SETPOS, PROGRESSRANGE, 0);
 	if (state->ssh2) {
-	    if (state->is_dsa) {
+	    if (state->keytype == DSA) {
 		state->ssh2key.data = &state->dsskey;
 		state->ssh2key.alg = &ssh_dss;
             } else if (state->keytype == ECDSA) {

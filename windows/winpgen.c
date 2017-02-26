@@ -1468,7 +1468,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg,
 	 */
 	ui_set_state(hwnd, state, 2);
         if (cmdline_keygen) {
-            PostMessage(hwnd, WM_COMMAND, IDC_EXPORT_OPENSSH, 0);
+            PostMessage(hwnd, WM_COMMAND, IDC_EXPORT_OPENSSH_AUTO, 0);
         }
 	break;
       case WM_HELP:

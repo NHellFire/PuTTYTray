@@ -82,7 +82,7 @@ HWND doctl(struct ctlpos *cp, RECT r,
     if (cp->hwnd) {
 	ctl = CreateWindowEx(exstyle, wclass, wtext, wstyle,
 			     r.left, r.top, r.right, r.bottom,
-			     cp->hwnd, (HMENU) wid, hinst, NULL);
+			     cp->hwnd, (HMENU)(ULONG_PTR)wid, hinst, NULL);
 	SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(TRUE, 0));
 
 	if (!strcmp(wclass, "LISTBOX")) {
@@ -273,10 +273,9 @@ void radioline(struct ctlpos *cp, char *text, int id, int nacross, ...)
     nbuttons = 0;
     while (1) {
 	char *btext = va_arg(ap, char *);
-	int bid;
 	if (!btext)
 	    break;
-	bid = va_arg(ap, int);
+	(void) va_arg(ap, int); /* id */
 	nbuttons++;
     }
     va_end(ap);
@@ -305,10 +304,10 @@ void bareradioline(struct ctlpos *cp, int nacross, ...)
     nbuttons = 0;
     while (1) {
 	char *btext = va_arg(ap, char *);
-	int bid;
 	if (!btext)
 	    break;
-	bid = va_arg(ap, int);
+	(void) va_arg(ap, int); /* id */
+        nbuttons++;
     }
     va_end(ap);
     buttons = snewn(nbuttons, struct radio);
@@ -336,10 +335,10 @@ void radiobig(struct ctlpos *cp, char *text, int id, ...)
     nbuttons = 0;
     while (1) {
 	char *btext = va_arg(ap, char *);
-	int bid;
 	if (!btext)
 	    break;
-	bid = va_arg(ap, int);
+	(void) va_arg(ap, int); /* id */
+        nbuttons++;
     }
     va_end(ap);
     buttons = snewn(nbuttons, struct radio);
@@ -2445,7 +2444,7 @@ void dlg_beep(void *dlg)
     MessageBeep(0);
 }
 
-void dlg_error_msg(void *dlg, char *msg)
+void dlg_error_msg(void *dlg, const char *msg)
 {
     struct dlgparam *dp = (struct dlgparam *)dlg;
     MessageBox(dp->hwnd, msg,
